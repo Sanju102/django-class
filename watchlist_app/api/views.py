@@ -6,12 +6,21 @@ from rest_framework.response import Response
 
 
 # Create your views here.
-@api_view(['GET'])
+@api_view(['GET','POST'])
 def movie_list(request):
-    movies=Movie.objects.all()
-    serializer=MovieSerializer(movies,many=True)
-    
-    return Response(serializer.data)
+    if request.method=="GET":
+        movies=Movie.objects.all()
+        serializer=MovieSerializer(movies,many=True)
+        
+        return Response(serializer.data)
+    elif request.method=="POST":
+        serializer=MovieSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            data={'message':'Data Created succesfully !!'}
+            return Response(data)
+        else:
+            return Response(serializer.errors)
 
 @api_view(['GET'])
 def movie_deatails(request,pk):
