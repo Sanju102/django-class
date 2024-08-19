@@ -22,9 +22,19 @@ def movie_list(request):
         else:
             return Response(serializer.errors)
 
-@api_view(['GET'])
+@api_view(['GET','PUT'])
 def movie_deatails(request,pk):
-    movie=Movie.objects.get(pk=pk)
-    serializer=MovieSerializer(movie)
-
-    return Response(serializer.data)
+    if request.method=="GET":
+        movie=Movie.objects.get(pk=pk)
+        serializer=MovieSerializer(movie)
+        return Response(serializer.data)
+    
+    elif request.method=="PUT":
+        movie=Movie.objects.get(pk=pk)
+        serializer=MovieSerializer(movie,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            data={'message':'Data updated succesfully !!'}
+            return Response(data)
+        else:
+            return Response(serializer.errors)
