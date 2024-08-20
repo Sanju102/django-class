@@ -1,20 +1,17 @@
 from django.http import JsonResponse
 from watchlist_app.models import Movie
 from watchlist_app.api.serializiers import MovieSerializer
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-
-# Create your views here.
-@api_view(['GET','POST'])
-def movie_list(request):
-    if request.method=="GET":
+class MovieList(APIView):
+    def get(self,request):
         movies=Movie.objects.all()
         serializer=MovieSerializer(movies,many=True)
         
         return Response(serializer.data)
-    elif request.method=="POST":
+    def post(self,request):
         serializer=MovieSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -23,9 +20,8 @@ def movie_list(request):
         else:
             return Response(serializer.errors)
 
-@api_view(['GET','PUT','DELETE'])
-def movie_deatails(request,pk):
-    if request.method=="GET":
+class MovieDetails(APIView):
+    def get(self,request,pk):
         try:
             movie=Movie.objects.get(pk=pk)
         except Movie.DoesNotExist:
@@ -33,7 +29,7 @@ def movie_deatails(request,pk):
         serializer=MovieSerializer(movie)
         return Response(serializer.data)
     
-    elif request.method=="PUT":
+    def put(self,request,pk):
         try:
             movie=Movie.objects.get(pk=pk)
         except Movie.DoesNotExist:
@@ -45,8 +41,8 @@ def movie_deatails(request,pk):
             return Response(data)
         else:
             return Response(serializer.errors)
-    elif request.method=="DELETE":
+    
+    def delete(self,request,pk):
         movie=Movie.objects.get(pk=pk)
         movie.delete()
         return Response({'message':"data deleted succesfully !"})
-    
