@@ -9,5 +9,5 @@ admin.site.register(WatchList, WatchListAdmin)
 class StreamPlatformAdmin(admin.ModelAdmin):
     list_display = ('name','about')
     search_fields = ['name','website']
-    
-admin.site.register(StreamPlatform,WatchListAdmin)
+
+admin.site.register(StreamPlatform,StreamPlatformAdmin)
