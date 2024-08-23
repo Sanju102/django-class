@@ -1,5 +1,10 @@
 from django.contrib import admin
 from .models import WatchList,StreamPlatform
 # Register your models here.
-admin.site.register(WatchList)
-admin.site.register(StreamPlatform)
+class WatchListAdmin(admin.ModelAdmin):
+    list_display = ('title','storyline')
+    search_fields = ['title','storyline']
+admin.site.register(WatchList, WatchListAdmin)
+
+
+# admin.site.register(StreamPlatform)
