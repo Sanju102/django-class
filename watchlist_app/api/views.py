@@ -1,3 +1,4 @@
+from watchlist_app.api.permissions import AdminorReadonly, ReviewUserorReadonly
 from django.http import JsonResponse
 from watchlist_app.models import WatchList,StreamPlatform,Review
 from watchlist_app.api.serializiers import WatchListSerializer,StreamPlatformSerializer,ReviewSerializer
@@ -7,13 +8,28 @@ from rest_framework import status
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+from rest_framework.validators import ValidationError
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 class ReviewCreate(generics.CreateAPIView):
     serializer_class=ReviewSerializer
+    def get_queryset(self):
+        return Review.objects.all()
     def perform_create(self, serializer):
-        serializer.save(watchlist=WatchList.objects.get(pk=self.kwargs['pk']))
+        watchlist=WatchList.objects.get(pk=self.kwargs['pk'])
+        queryset = Review.objects.filter(review_user=self.request.user,watchlist=watchlist)
+        if queryset.exists():
+            raise ValidationError('You have already gave a review')
+        serializer.save(review_user=self.request.user,watchlist=watchlist)
+        # watchlist=WatchList.objects.get(pk=self.kwargs['pk'])
+        # user=self.request.user
+        # reviewqueryset=Review.objects.filter(watchlist=watchlist,review_user=user)
+        # if reviewqueryset.exists():
+        #     raise ValidationError("user already gave review for  this content")
+        # serializer.save()
 
 class ReviewList(generics.ListAPIView):
+    permission_classes=[AdminorReadonly]
     # queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     def get_queryset(self):
@@ -22,8 +38,14 @@ class ReviewList(generics.ListAPIView):
         return Review.objects.filter(watchlist=pk)
 
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[ReviewUserorReadonly]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+
+class WatchListViewSet(viewsets.ModelViewSet):
+    permission_classes=[AdminorReadonly]
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
 
 class WatchListList(APIView):
     def get(self,request):
@@ -41,6 +63,7 @@ class WatchListList(APIView):
             return Response(serializer.errors)
 
 class WatchListDetails(APIView):
+    permission_classes=[AdminorReadonly]
     def get(self,request,pk):
         try:
             watch_list=WatchList.objects.get(pk=pk)
@@ -79,3 +102,21 @@ class StreamPlatformViewSet(viewsets.ViewSet):
         serializer = StreamPlatformSerializer(platform)
         return Response(serializer.data)
 
+    def create(self,request):
+        serializer=StreamPlatformSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            data={'message':'Data Created succesfully !!'}
+            return Response(data)
+        else:
+            return Response(serializer.errors)
+        
+    def update(self, request, pk=None):
+        queryset = StreamPlatform.objects.all()
+        platform = get_object_or_404(queryset, pk=pk)
+        serializer=StreamPlatformSerializer(platform,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
