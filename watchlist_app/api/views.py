@@ -5,6 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
+
 class ReviewCreate(generics.CreateAPIView):
     serializer_class=ReviewSerializer
     def perform_create(self, serializer):
@@ -64,46 +67,15 @@ class WatchListDetails(APIView):
         watch_list.delete()
         return Response({'message':"data deleted succesfully !"})
     
-
-class StreamPlatformList(APIView):
-    def get(self,request):
-        StreamPlatforms=StreamPlatform.objects.all()
-        serializer=StreamPlatformSerializer(StreamPlatforms,many=True)
-        
+class StreamPlatformViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = StreamPlatform.objects.all()
+        serializer = StreamPlatformSerializer(queryset, many=True)
         return Response(serializer.data)
-    def post(self,request):
-        serializer=StreamPlatformSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            data={'message':'Data Created succesfully !!'}
-            return Response(data)
-        else:
-            return Response(serializer.errors)
 
-class StreamPlatformDetails(APIView):
-    def get(self,request,pk):
-        try:
-            stream_platform=StreamPlatform.objects.get(pk=pk)
-        except stream_platform.DoesNotExist:
-            return Response({'message':'StreamPlatform not found !'}, status=status.HTTP_404_NOT_FOUND)
-        serializer=StreamPlatformSerializer(stream_platform)
+    def retrieve(self, request, pk=None):
+        queryset = StreamPlatform.objects.all()
+        platform = get_object_or_404(queryset, pk=pk)
+        serializer = StreamPlatformSerializer(platform)
         return Response(serializer.data)
-    
-    def put(self,request,pk):
-        try:
-            stream_platform=StreamPlatform.objects.get(pk=pk)
-        except stream_platform.DoesNotExist:
-            return Response({'Message':'StreamPlatform matching query does not exist'},status=status.HTTP_400_BAD_REQUEST)
-        serializer=StreamPlatformSerializer(stream_platform,data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            data={'message':'Data updated succesfully !!'}
-            return Response(data)
-        else:
-            return Response(serializer.errors)
-    
-    def delete(self,request,pk):
-        stream_platform=StreamPlatform.objects.get(pk=pk)
-        stream_platform.delete()
-        return Response({'message':"data deleted succesfully !"})
 
